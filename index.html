@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validator Special Reward Probability Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .calculator-container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+        }
+        .input-group {
+            display: flex;
+            margin-top: 5px;
+        }
+        input[type="number"] {
+            flex: 3;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        select {
+            flex: 1;
+            margin-left: 5px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <h2>Validator Special Reward Probability Calculator</h2>
+        <label for="totalStake">Total NIM locked:</label>
+        <div class="input-group">
+            <input type="number" id="totalStake" placeholder="e.g., 5" />
+            <select id="totalStakeUnit">
+                <option value="1000000">Million</option>
+                <option value="1000000000">Billion</option>
+            </select>
+        </div>
+
+        <label for="personalStake">Your Personal Stake (in NIM):</label>
+        <div class="input-group">
+            <input type="number" id="personalStake" placeholder="e.g., 5" />
+            <select id="personalStakeUnit">
+                <option value="1000000">Million</option>
+                <option value="1000000000">Billion</option>
+            </select>
+        </div>
+
+        <button onclick="calculateProbability()">Calculate Probability</button>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        function calculateProbability() {
+            const totalStakeValue = parseFloat(document.getElementById("totalStake").value);
+            const personalStakeValue = parseFloat(document.getElementById("personalStake").value);
+            const totalStakeUnit = parseFloat(document.getElementById("totalStakeUnit").value);
+            const personalStakeUnit = parseFloat(document.getElementById("personalStakeUnit").value);
+
+            if (isNaN(totalStakeValue) || isNaN(personalStakeValue) || totalStakeValue <= 0 || personalStakeValue <= 0) {
+                document.getElementById("result").innerText = "Please enter valid positive numbers for both stakes.";
+                return;
+            }
+
+            // Calculate the actual total and personal stakes based on the unit selected
+            const totalStake = totalStakeValue * totalStakeUnit;
+            const personalStake = personalStakeValue * personalStakeUnit;
+
+            // Constants as per the requirement
+            const epochsTotal = 100; // Total number of epochs
+            const epochsRequired = 35; // Number of epochs to be elected in
+            const slotsPerEpoch = 512; // Total number of slots available per epoch
+
+            // Calculate the probability of getting a slot in a single epoch
+            const probabilityPerSlot = personalStake / totalStake;
+            const probabilityPerEpoch = 1 - Math.pow(1 - probabilityPerSlot, slotsPerEpoch);
+
+            // Calculate the probability of being elected in at least 35 out of 100 epochs
+            let cumulativeProbability = 0;
+            for (let k = epochsRequired; k <= epochsTotal; k++) {
+                cumulativeProbability += binomialCoefficient(epochsTotal, k) * Math.pow(probabilityPerEpoch, k) * Math.pow(1 - probabilityPerEpoch, epochsTotal - k);
+            }
+
+            document.getElementById("result").innerText = `Your probability of being elected in at least 35 out of 100 epochs is approximately ${(cumulativeProbability * 100).toFixed(2)}%`;
+        }
+
+        // Helper function to calculate binomial coefficient (n choose k)
+        function binomialCoefficient(n, k) {
+            if (k > n) return 0;
+            if (k === 0 || k === n) return 1;
+            let coeff = 1;
+            for (let i = 1; i <= k; i++) {
+                coeff *= (n - (k - i)) / i;
+            }
+            return coeff;
+        }
+    </script>
+</body>
+</html>
